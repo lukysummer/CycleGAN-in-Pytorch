@@ -15,9 +15,9 @@ Datasets necessary for CycleGAN projects can be downloaded from [this link](http
 ## List of Hyperparameters used:
 
 * Batch Size = **1**
-* Image Size = **128**  (128 x 128 image)
-* # of filters in Discriminator's first hidden layer = **64**
-* # of filters in Generator's first hidden layer = **64**
+* Generated Image Size = **128 x 128**  
+* Number of Filters in Discriminator's first hidden layer = **64**
+* Number of Filters in Generator's first hidden layer = **64**
 * Initial Learning Rate = **0.0002**
 * # of Epochs: **55**
 
