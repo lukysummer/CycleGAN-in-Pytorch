@@ -8,12 +8,12 @@ The main task was to carry out image-to-image translation from Horse to Zebra.
 This repository contains:
 * **CycleGAN.py** : Complete code for ALL steps of CycleGAN Implementation
 * **CylceGAN.ipynb** : Jupyter notebook explaining step-by-step procedures for implementing CycleGAN 
-                      (based off [this source] (https://github.com/udacity/deep-learning-v2-pytorch/tree/master/cycle-gan), but added/modified to resemble the model presented in the original paper)
+                      (based off [this source](https://github.com/udacity/deep-learning-v2-pytorch/tree/master/cycle-gan), but added/modified to resemble the model presented in the original paper)
 * **visualize_test_images.py** : Code for genearating & visualizing new images using the test set, using the saved pre-trained parameters '~.pt' files 
 					  
 ## Results
 
-Some examples of the result:
+(some examples of the result)
 <img src="notebook_images/skip_A2B.png">
 
 ## Datasets
@@ -31,12 +31,12 @@ Datasets necessary for CycleGAN projects can be downloaded from [this link](http
 
 ## Sources
 
-The following sources assisted in building & debugging the final model :
+I referenced the following sources for building & debugging the final model :
 
-https://github.com/udacity/deep-learning-v2-pytorch
-https://www.cs.ru.nl/bachelors-theses/2018/Robin_Elbers___4225678___On_the_replication_of_CycleGAN.pdf
-https://github.com/leehomyc/cyclegan-1
-https://github.com/danieltan07/tensorflow-cycle-gan
+* https://github.com/udacity/deep-learning-v2-pytorch
+* https://www.cs.ru.nl/bachelors-theses/2018/Robin_Elbers___4225678___On_the_replication_of_CycleGAN.pdf
+* https://github.com/leehomyc/cyclegan-1
+* https://github.com/danieltan07/tensorflow-cycle-gan
 
 
 
