@@ -19,5 +19,5 @@ Datasets necessary for CycleGAN projects can be downloaded from [this link](http
 * Number of Filters in Discriminator's first hidden layer = **64**
 * Number of Filters in Generator's first hidden layer = **64**
 * Initial Learning Rate = **0.0002**
-* # of Epochs: **55**
+* Number of Epochs: **55**
 
