@@ -6,7 +6,7 @@ The main task was to carry out image-to-image translation from Horse to Zebra.
 ## Results
 
 Some examples of the result:
-<<img src="skip_A2B.png">
+<<img src="notebook_images/skip_A2B.png">
 
 ## Datasets
 
