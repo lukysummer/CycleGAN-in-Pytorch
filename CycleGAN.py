@@ -9,6 +9,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+###############################################################################
+####################### 1. LOAD THE TRAINING SET DATA #########################
+###############################################################################
 image_dir_1 = 'summer2winter_yosemite'
 image_dir_2 = 'apple2orange'
 image_dir_3 = 'horse2zebra'
@@ -47,18 +50,9 @@ print('# of horse images: ', len(dataloader_X))
 print('# of zebra images: ', len(dataloader_Y))
 
 
-
-def scale(x, feature_range=(-1, 1)):
-    ''' Scale takes in an image x and returns that image, scaled
-       with a feature_range of pixel values from -1 to 1. 
-       This function assumes that the input x is already scaled from 0-255.'''
-    # scale from 0-1 to feature_range
-    min, max = feature_range
-    x = x * (max - min) + min
-    
-    return x
-
-
+###############################################################################
+###################### 2. DEFINE DISCRIMINATOR NETWORK ########################
+###############################################################################
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -94,6 +88,9 @@ class Discriminator(nn.Module):
         return x
     
 
+###############################################################################
+######################### 3. DEFINE RESIDUAL BLOCK ############################
+###############################################################################
 class ResidualBlock(nn.Module):
     """Defines a residual block.
        This adds an input x to a convolutional layer (applied to x) with the same size input and output.
@@ -118,7 +115,9 @@ class ResidualBlock(nn.Module):
         
         return x    
     
-    
+###############################################################################
+######################### 4. DEFINE GENERATOR NETWORK #########################
+###############################################################################    
 def deconv(in_channels, out_channels, kernel_size, stride=2, padding=1, 
            output_padding=1, batch_norm=True):
     """Creates a transpose convolutional layer, with optional batch normalization."""
@@ -176,6 +175,9 @@ class CycleGenerator(nn.Module):
         return out
     
 
+###############################################################################
+###################### 5. FUNCTION TO INITIALIZE WEIGHTS ######################
+###############################################################################
 from torch.nn import init
 
 def init_weights(m):
@@ -192,7 +194,9 @@ def init_weights(m):
         init.constant_(m.bias.data, 0.0)
 
 
-
+###############################################################################
+################# 6. BUILD D & G MODELS & INITIALIZE WEIGHTS ##################
+###############################################################################
 def create_model(g_conv_dim=64, d_conv_dim=64, n_res_blocks=6):
     
     G_XtoY = CycleGenerator(conv_dim=g_conv_dim, n_res_blocks=n_res_blocks)
@@ -226,23 +230,32 @@ G_XtoY.load_state_dict(torch.load('G_XtoY.pt'))
 G_YtoX.load_state_dict(torch.load('G_YtoX.pt'))
 '''
 
+###############################################################################
+#################### 7. FUNCTION TO SCALE THE PIXEL VALUES ####################
+###############################################################################
+def scale(x, feature_range=(-1, 1)):
+    ''' Scale takes in an image x and returns that image, scaled
+       with a feature_range of pixel values from -1 to 1. 
+       This function assumes that the input x is already scaled from 0-255.'''
+    # scale from 0-1 to feature_range
+    min, max = feature_range
+    x = x * (max - min) + min
+    
+    return x
+
+
+###############################################################################
+####################### 8. DEFINE LOSSES & OPTIMIZERS #########################
+###############################################################################
 def real_mse_loss(D_out):
     return torch.mean((D_out-1)**2)
-
 
 def fake_mse_loss(D_out):
     return torch.mean(D_out**2)
 
-
 def cycle_consistency_loss(real_im, reconstructed_im, lambda_weight):
-    # calculate reconstruction loss as absolute value difference between the real and reconstructed images
-    #try:
+    # calculate reconstruction loss as absolute (l1) value difference between the real & reconstructed images
     reconstr_loss = torch.mean(torch.abs(real_im - reconstructed_im))
-        
-    #except RuntimeError:
-        #min_batch = min(real_im.size(0), reconstructed_im.size(0))
-        #reconstr_loss = torch.mean(torch.abs(real_im[:min_batch, :, :] - reconstructed_im[:min_batch, :, :]))
-        #print('color_loss adjusted!')
         
     return lambda_weight * reconstr_loss    
 
@@ -260,6 +273,9 @@ def lr_decay(params, epoch):
     return optim.Adam(params, lr, [beta1, beta2])
 
 
+###############################################################################
+###### 9. FUNCTION TO MAKE A BUFFER OF 50 FAKE IMAGES FOR DISCRIMINATOR #######
+###############################################################################
 # History of 50 images to use when updating the discriminator (pool_size = 50)
 import random
 
@@ -276,7 +292,12 @@ def pick_from_pool(pool_size, fakes):
         return fakes_50[random_index]
 
 
+###############################################################################
+######## 10. FUNCTION TO CONVERT A TORCH TENSOR IMAGE INTO NUMPY ARRAY ########
+###############################################################################
+# for saving & plotting processed images
 def to_numpy(img):
+    
     if torch.cuda.is_available:
         img = img.cpu()
     img = img.data.numpy()
@@ -285,8 +306,12 @@ def to_numpy(img):
     
     return img
 
+
+###############################################################################
+############################ 11. TRAIN THE NETWORK ############################
+###############################################################################
 import tqdm
-################################ TRAIN THE MODEL ##############################
+
 def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_epochs):
     
     print_every=1
@@ -328,15 +353,6 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
 
             images_Y, _ = iter_Y.next()
             images_Y = scale(images_Y)
-            
-            '''
-            XX = to_numpy(images_X)
-            YY = to_numpy(images_Y)
-            plt.imshow(XX)
-            plt.show()
-            plt.imshow(YY)
-            plt.show()
-            '''
             
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
             images_X = images_X.to(device)
@@ -411,10 +427,6 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             g_total_loss.backward()
             g_optimizer.step()
 
-        torch.save(D_X.state_dict(), 'D_X.pt')
-        torch.save(D_Y.state_dict(), 'D_Y.pt')
-        torch.save(G_XtoY.state_dict(), 'G_XtoY.pt')
-        torch.save(G_YtoX.state_dict(), 'G_YtoX.pt')
         
         if epoch % print_every == 0:
             # append real and fake discriminator losses and the generator loss
@@ -426,6 +438,12 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
         sample_every=5
         # Save the generated samples
         if epoch % sample_every == 0:
+            # Save model parameters
+            torch.save(D_X.state_dict(), 'D_X.pt')
+            torch.save(D_Y.state_dict(), 'D_Y.pt')
+            torch.save(G_XtoY.state_dict(), 'G_XtoY.pt')
+            torch.save(G_YtoX.state_dict(), 'G_YtoX.pt')
+        
             G_YtoX.eval() # set generators to eval mode for sample generation
             G_XtoY.eval()
             
@@ -437,10 +455,6 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
             
             X, fake_X, recon_Y = to_numpy(fixed_X), to_numpy(fake_sample_X), to_numpy(recon_sample_Y)
             Y, fake_Y, recon_X = to_numpy(fixed_Y), to_numpy(fake_sample_Y), to_numpy(recon_sample_X)
-            
-            print(X.shape)
-            print(fake_X.shape)
-            print(recon_Y.shape)
             
             if(epoch == sample_every):
                 plt.imsave('Input_X.png', X)
@@ -459,5 +473,4 @@ def training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader
     return losses
 
 n_epochs = 55
-
 losses = training_loop(dataloader_X, dataloader_Y, test_dataloader_X, test_dataloader_Y, n_epochs=n_epochs)
