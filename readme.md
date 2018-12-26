@@ -7,8 +7,6 @@ The main task was to carry out image-to-image translation from Horse to Zebra.
 
 This repository contains:
 * **CycleGAN.py** : Complete code for ALL steps of CycleGAN Implementation
-* **CylceGAN.ipynb** : Jupyter notebook explaining step-by-step procedures for implementing CycleGAN 
-                      (based off [this source](https://github.com/udacity/deep-learning-v2-pytorch/tree/master/cycle-gan), but added/modified to resemble the model presented in the original paper)
 * **visualize_test_images.py** : Code for genearating & visualizing new images using the test set, using the saved pre-trained parameters '~.pt' files 
 					  
 ## Results
