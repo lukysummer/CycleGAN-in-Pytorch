@@ -35,6 +35,3 @@ I referenced the following sources for building & debugging the final model :
 * https://www.cs.ru.nl/bachelors-theses/2018/Robin_Elbers___4225678___On_the_replication_of_CycleGAN.pdf
 * https://github.com/leehomyc/cyclegan-1
 * https://github.com/danieltan07/tensorflow-cycle-gan
-
-
-
