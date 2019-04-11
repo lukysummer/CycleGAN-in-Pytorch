@@ -17,16 +17,18 @@ image_dir_2 = 'apple2orange'
 image_dir_3 = 'horse2zebra'
 
 def get_data_loader(image_type, image_size, batch_size, image_dir, num_workers=0):
-    """Returns training and test data loaders for a given image type, either 'summer' or 'winter'. 
-       These images will be resized to 128x128x3, by default, converted into Tensors, and normalized.
+    """
+    Returns train and test loaders for a given image type (domain) of the given application 
+    *Images will be resized to 128x128x3, converted into Tensors, and normalized.
+    : param image_type: (str) "A" or "B" (which of the 2 domains)
+    : param image_size: (int) image width/height (assumes square image)
+    : param batch_size: (int) batch size
+    : param image_dir: (str) directory name for images (list above)
     """
     transform = transforms.Compose([transforms.Resize(image_size), # resize to 128x128
                                     transforms.ToTensor()])
 
     image_path = image_dir
-    # Uncomment if summer2winter:
-    #train_path = os.path.join(image_path, image_type)  
-    #test_path = os.path.join(image_path, 'test_{}'.format(image_type))
     train_path = os.path.join(image_path, 'train{}'.format(image_type))
     test_path = os.path.join(image_path, 'test{}'.format(image_type))
 
