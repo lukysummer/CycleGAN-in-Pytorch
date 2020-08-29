@@ -58,12 +58,22 @@ print('# of zebra images: ', len(dataloader_Y))
 import torch.nn as nn
 import torch.nn.functional as F
 
-def conv(in_channels, out_channels, kernel_size, stride=2, padding=1, batch_norm=True):
+def conv(in_channels, 
+         out_channels, 
+         kernel_size, 
+         stride=2, 
+         padding=1, 
+         batch_norm=True):
     """Creates a convolutional layer, with optional batch normalization."""
+    
     layers = []
-    layers.append(nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, bias=False))
+    layers.append(
+        nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, bias=False)
+    )
     if batch_norm:
-        layers.append(nn.BatchNorm2d(out_channels))
+        layers.append(
+            nn.BatchNorm2d(out_channels)
+        )
         
     return nn.Sequential(*layers)
 
@@ -72,20 +82,20 @@ class Discriminator(nn.Module):
     
     def __init__(self, conv_dim=64):
         super(Discriminator, self).__init__()
-        # first layer has *no* batchnorm
-        self.conv1 = conv(3, conv_dim, kernel_size = 4, batch_norm=False)
+                 
+        self.conv1 = conv(3, conv_dim, kernel_size = 4, batch_norm=False)   # first layer has NO batchnorm
         self.conv2 = conv(conv_dim, conv_dim*2, kernel_size = 4)
         self.conv3 = conv(conv_dim*2, conv_dim*4, kernel_size = 4)
         self.conv4 = conv(conv_dim*4, conv_dim*8, kernel_size = 4)
         self.conv5 = conv(conv_dim*8, 1, kernel_size = 4, stride = 1, batch_norm=False)
 
     def forward(self, x):
-        ########################################  Input x :      (3, 128, 128)
-        x = F.leaky_relu(self.conv1(x), negative_slope = 0.2)  # (64, 64, 64)
-        x = F.leaky_relu(self.conv2(x), negative_slope = 0.2)  # (128, 32, 32)
-        x = F.leaky_relu(self.conv3(x), negative_slope = 0.2)  # (256, 16, 16)
-        x = F.leaky_relu(self.conv4(x), negative_slope = 0.2)  # (512, 8, 8)
-        x = self.conv5(x)                                      # (5, 5, 1)
+        ########################################        Input x :  (3, 128, 128)
+        x = F.leaky_relu( self.conv1(x), negative_slope = 0.2 )  # (64, 64, 64)
+        x = F.leaky_relu( self.conv2(x), negative_slope = 0.2 )  # (128, 32, 32)
+        x = F.leaky_relu( self.conv3(x), negative_slope = 0.2 )  # (256, 16, 16)
+        x = F.leaky_relu( self.conv4(x), negative_slope = 0.2 )  # (512, 8, 8)
+        x = self.conv5(x)                                        # (5, 5, 1)
         
         return x
     
@@ -94,40 +104,46 @@ class Discriminator(nn.Module):
 ######################### 3. DEFINE RESIDUAL BLOCK ############################
 ###############################################################################
 class ResidualBlock(nn.Module):
-    """Defines a residual block.
-       This adds an input x to a convolutional layer (applied to x) with the same size input and output.
-       These blocks allow a model to learn an effective transformation from one domain to another.
+    """
+        Adds input x to a convolutional layer (applied to x) with the same size input and output.
+        = 2 x [ x + (CNN + batch norm)(x) ]
     """
     def __init__(self, conv_dim):
         super(ResidualBlock, self).__init__()
-        # define two convolutional layers + batch normalization that will act as our residual function, F(x)
-        # layers should have the same shape input as output; I suggest a kernel_size of 3
+        
+        # layers should have the same shape input as output --> kernel_size of 3
         self.refl_padding = nn.ReflectionPad2d(1)
-        self.conv1 = conv(conv_dim, conv_dim, kernel_size=3, stride=1, padding=0)
-        self.conv2 = conv(conv_dim, conv_dim, kernel_size=3, stride=1, padding=0)
+        self.conv1 = conv(conv_dim, conv_dim, kernel_size=3, stride=1)
+        self.conv2 = conv(conv_dim, conv_dim, kernel_size=3, stride=1)
         
     def forward(self, x):
-        # apply a ReLu activation the outputs of the first layer
-        # return a summed output, x + resnet_block(x)
-        out = self.refl_padding(x)   # (256, 34, 34)
-        out = F.relu(self.conv1(out))  # (256, 32, 32)
-        out = self.refl_padding(out)   # (256, 34, 34)
-        out = self.conv2(out)          # (256, 32, 32)
-        x = x + out
+        out = self.refl_padding(x)       # (256, 34, 34)
+        out = F.relu( self.conv1(out) )  # (256, 32, 32) - apply ReLu to outputs of first layer only
+        out = self.refl_padding(out)     # (256, 34, 34)
+        out = self.conv2(out)            # (256, 32, 32)
         
-        return x    
+        return x + out   
     
 ###############################################################################
 ######################### 4. DEFINE GENERATOR NETWORK #########################
 ###############################################################################    
-def deconv(in_channels, out_channels, kernel_size, stride=2, padding=1, 
-           output_padding=1, batch_norm=True):
-    """Creates a transpose convolutional layer, with optional batch normalization."""
+def deconv(in_channels, 
+           out_channels, 
+           kernel_size, 
+           stride=2, 
+           padding=1, 
+           output_padding=1, 
+           batch_norm=True):
+    """Creates a transpose convolutional layer, with optional batch normalization"""
+    
     layers = []
-    layers.append(nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride, 
-                                     padding, output_padding, bias=False))
+    layers.append(
+        nn.ConvTranspose2d(in_channels, out_channels, kernel_size, stride, padding, output_padding, bias=False)
+    )
     if batch_norm:
-        layers.append(nn.BatchNorm2d(out_channels))
+        layers.append(
+            nn.BatchNorm2d(out_channels)
+        )
         
     return nn.Sequential(*layers)
 
@@ -136,43 +152,44 @@ class CycleGenerator(nn.Module):
     
     def __init__(self, conv_dim=64, n_res_blocks=6):
         super(CycleGenerator, self).__init__()
-        # 1. Define the encoder part of the generator
-        self.refl_padding = nn.ReflectionPad2d(3)
         
-        self.conv1 = conv(3, conv_dim, kernel_size=7, stride=1, padding=0)
+        # 1. Encoder 
+        self.refl_padding = nn.ReflectionPad2d(3)        
+        self.conv1 = conv(3, conv_dim, kernel_size = 7, stride=1, padding=0)
         self.conv2 = conv(conv_dim, conv_dim*2, kernel_size = 3)
         self.conv3 = conv(conv_dim*2, conv_dim*4, kernel_size = 3) 
 
-        # 2. Define the resnet part of the generator
+        # 2. Resnet 
         res_layers = []
         for layer in range(n_res_blocks):
             res_layers.append(ResidualBlock(conv_dim*4))
         self.res_blocks = nn.Sequential(*res_layers) 
 
-        # 3. Define the decoder part of the generator
+        # 3. Decoder 
         self.deconv1 = deconv(conv_dim*4, conv_dim*2, kernel_size = 3)   
         self.deconv2 = deconv(conv_dim*2, conv_dim, kernel_size = 3)   
-        # no batch norm on last layer
+        
+        # 4. Final CNN for Skip Layer
         self.conv_final = conv(conv_dim, 3, kernel_size=7, stride=1, padding=0, batch_norm=False)   # (3, 128, 128)
 
     def forward(self, x):
         """Given an image x, returns a transformed image."""
-        ##############  Input x :      (3, 128, 128)
-        out = self.refl_padding(x)     # (3, 134, 134)
+        ##############  Input x :            (3, 128, 128)
+        out = self.refl_padding(x)         # (3, 134, 134)
         
-        out = F.relu(self.conv1(out))    # (64, 128, 128)
-        out = F.relu(self.conv2(out))    # (128, 64, 64)
-        out = F.relu(self.conv3(out))    # (256, 32, 32)
+        out = F.relu( self.conv1(out) )    # (64, 128, 128)
+        out = F.relu( self.conv2(out) )    # (128, 64, 64)
+        out = F.relu( self.conv3(out) )    # (256, 32, 32)
 
-        out = self.res_blocks(out)       # (256, 32, 32)
+        out = self.res_blocks(out)         # (256, 32, 32)
 
-        out = F.relu(self.deconv1(out))  # (128, 64, 64)
-        out = F.relu(self.deconv2(out))  # (64, 128, 128)
+        out = F.relu(self.deconv1(out))    # (128, 64, 64)
+        out = F.relu(self.deconv2(out))    # (64, 128, 128)
         
-        out = self.refl_padding(out)     # (64, 134, 134)
-        # skip layer
-        out = F.tanh(x + self.conv_final(out))
-        #out = F.tanh(self.conv_final(out))  # (3, 128, 128)
+        out = self.refl_padding(out)       # (64, 134, 134)
+        
+        # Skip layer
+        out = F.tanh( x + self.conv_final(out) ) # (3, 128, 128)  
 
         return out
     
@@ -203,11 +220,13 @@ def create_model(g_conv_dim=64, d_conv_dim=64, n_res_blocks=6):
     
     G_XtoY = CycleGenerator(conv_dim=g_conv_dim, n_res_blocks=n_res_blocks)
     G_XtoY.apply(init_weights)
+    
     G_YtoX = CycleGenerator(conv_dim=g_conv_dim, n_res_blocks=n_res_blocks)
     G_YtoX.apply(init_weights)
     
     D_X = Discriminator(conv_dim=d_conv_dim)
     D_X.apply(init_weights)
+    
     D_Y = Discriminator(conv_dim=d_conv_dim)
     D_Y.apply(init_weights)
     
